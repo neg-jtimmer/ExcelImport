@@ -1,0 +1,42 @@
+name: excel_import
+recipe: laravel
+config:
+  php: "8.1"
+  webroot: public
+  via: nginx
+  cache: redis
+  database: mysql:8.0
+  xdebug: true
+services:
+  appserver:
+    type: php:8.1
+    composer_version: 2-latest
+    xdebug: true
+    overrides:
+      environment:
+        LANDO_HOST_IP: host.docker.internal
+        XDEBUG_CONFIG: client_host=host.docker.internal
+        TERM: xterm-256color
+    config:
+      php: .lando/php.ini
+    build_as_root:
+      - touch /tmp/xdebug.log
+      - chown www-data /tmp/xdebug.log 
+  node:
+    type: node:16
+  database:
+    port: 33306
+    portforward: 33307
+    overrides:
+      environment:
+        TZ: 'Europe/Amsterdam'
+tooling:
+  test:
+    service: appserver
+    cmd: ./run_tests.sh
+    user: root
+  phpunit:
+    service: appserver
+    cmd: ./vendor/bin/phpunit
+  npm:
+    service: node
